@@ -1,0 +1,44 @@
+{
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.0.0",
+    "@testing-library/react": "^11.0.0",
+    "axios": "^1.7.7",
+    "gridstack": "^11.1.1",
+    "react-grid-layout": "^1.5.0",
+    "react-icons": "^5.3.0",
+    "react-resizable": "^3.0.5",
+    "react-router-dom": "^7.0.2",
+    "react-swipeable": "^7.0.2",
+    "recharts": "^2.13.3"
+  },
+  "devDependencies": {
+    "@types/axios": "^0.14.4",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/recharts": "^1.8.29"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "./setupTests.ts"
+    ],
+    "testEnvironment": "jsdom",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    },
+    "testMatch": [
+      "**/?(*.)+(spec|test).[tj]s?(x)"
+    ],
+    "workspaces": [
+      "frontend/front_login_page",
+      "frontend/front_user_page"
+    ]
+  }
+}
