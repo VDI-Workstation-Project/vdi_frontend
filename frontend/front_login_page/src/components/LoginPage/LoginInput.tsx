@@ -1,7 +1,7 @@
 
 import styled from "styled-components";
 import {SignInButton} from "../../assets/button/button.tsx";
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useNavigate} from 'react-router-dom';
 import axios from "axios";
 
@@ -131,6 +131,23 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
     const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
 
+    useEffect(() => {
+
+        const initializeConnection = async () => {
+
+            try {
+                const response = await axios.post('http://localhost:8081/api/citrix/test-connection');
+                if (response.status !== 200) {
+                    setErrorMessage('서버 연결에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Connection initialization failed:', error);
+                setErrorMessage('서버 연결에 실패했습니다.');
+            }
+        };
+        initializeConnection();
+    }, [])
+
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setUserId(e.target.value);
         console.log('Email:', e.target.value);
@@ -146,7 +163,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
     };
 
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
 
         if (!isValidEmail(userId)) {
             setErrorMessage('올바른 이메일 형식을 입력하세요.');
@@ -159,13 +176,13 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
             return;
         }
 
-        const currentTime = new Date().toISOString();
-
-        const requestBody = {
-            userId: userId,
-            password: password,
-            logInAttemptTime: currentTime,
-        }
+        // const currentTime = new Date().toISOString();
+        //
+        // const requestBody = {
+        //     userId: userId,
+        //     password: password,
+        //     logInAttemptTime: currentTime,
+        // }
         // console.log('로그인 요청', { email, password });
         //
         // // 모의 로그인 검증
@@ -176,17 +193,34 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
         //     setErrorMessage('로그인에 실패했습니다.');
         //     console.error('Invalid login credentials');
         // }
-            axios.post('http://localhost:8081/login', requestBody)
-                .then(function (res) {
-                    if (res.status === 200) {
-                        const data = res.data;
-                        localStorage.setItem('token', data.accessToken);
-                        localStorage.setItem('refreshToken', data.refreshToken);
-                        navigate('/user/mainpage/dashboard');
-                    } else {
-                        alert('비정상 응답')
-                    }
-                })
+        //     axios.post('http://localhost:8081/login', requestBody)
+        //         .then(function (res) {
+        //             if (res.status === 200) {
+        //                 const data = res.data;
+        //                 localStorage.setItem('token', data.accessToken);
+        //                 localStorage.setItem('refreshToken', data.refreshToken);
+        //                 navigate('/user/mainpage/dashboard');
+        //             } else {
+        //                 alert('비정상 응답')
+        //             }
+        //         })
+        try {
+            const response = await axios.post('http://localhost:8081/api/citrix/login', {
+                username: userId,
+                password: password,
+                saveCredentials: false
+            });
+
+            if (response.data.status === 'success') {
+                navigate('/user/mainpage/dashboard');
+            } else {
+                setErrorMessage('로그인에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('Login failed:', error);
+            setErrorMessage('로그인 중 오류가 발생했습니다.');
+        }
+
     };
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
