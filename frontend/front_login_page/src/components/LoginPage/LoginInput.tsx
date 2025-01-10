@@ -1,7 +1,7 @@
 
 import styled from "styled-components";
 import {SignInButton} from "../../assets/button/button.tsx";
-import {useEffect, useState} from "react";
+import { useState} from "react";
 import { useNavigate} from 'react-router-dom';
 import axios from "axios";
 
@@ -131,23 +131,6 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
     const [errorMessage, setErrorMessage] = useState('');
     const navigate = useNavigate();
 
-    useEffect(() => {
-
-        const initializeConnection = async () => {
-
-            try {
-                const response = await axios.post('http://localhost:8081/api/citrix/test-connection');
-                if (response.status !== 200) {
-                    setErrorMessage('서버 연결에 실패했습니다.');
-                }
-            } catch (error) {
-                console.error('Connection initialization failed:', error);
-                setErrorMessage('서버 연결에 실패했습니다.');
-            }
-        };
-        initializeConnection();
-    }, [])
-
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setUserId(e.target.value);
         console.log('Email:', e.target.value);
@@ -158,7 +141,9 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
         console.log('Password:', e.target.value);
     };
     const isValidEmail = (email: string) => {
-        const emailPattern = /$/;
+        // const emailPattern = /$/;
+        // return emailPattern.test(email);
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailPattern.test(email);
     };
 
@@ -211,7 +196,18 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
                 saveCredentials: false
             });
 
-            if (response.data.status === 'success') {
+            console.log('서버 응답:', response.data);  // 디버깅용
+
+            if (response.data.success) {
+
+                // 토큰 저장
+                const { accessToken, refreshToken } = response.data;
+                localStorage.setItem('accessToken', accessToken);
+                localStorage.setItem('refreshToken', refreshToken);
+
+                // 모든 axios 요청에 토큰 자동 포함
+                axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
                 navigate('/user/mainpage/dashboard');
             } else {
                 setErrorMessage('로그인에 실패했습니다.');
