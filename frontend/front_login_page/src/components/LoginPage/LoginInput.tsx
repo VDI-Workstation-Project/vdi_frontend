@@ -3,7 +3,7 @@ import styled from "styled-components";
 import {SignInButton} from "../../assets/button/button.tsx";
 import { useState} from "react";
 import { useNavigate} from 'react-router-dom';
-import axios from "axios";
+import axiosInstance from "../auth/axiosInstance.tsx";
 
 const Label = styled.label`
     color: #ffffff;
@@ -161,36 +161,8 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
             return;
         }
 
-        // const currentTime = new Date().toISOString();
-        //
-        // const requestBody = {
-        //     userId: userId,
-        //     password: password,
-        //     logInAttemptTime: currentTime,
-        // }
-        // console.log('로그인 요청', { email, password });
-        //
-        // // 모의 로그인 검증
-        // if (email === 'dh2359' && password === 'qw12qw12qw!@') {
-        //     console.log('로그인 성공');
-        //     navigate('/user/dashboard'); // 로그인 성공 시 대시보드로 이동
-        // } else {
-        //     setErrorMessage('로그인에 실패했습니다.');
-        //     console.error('Invalid login credentials');
-        // }
-        //     axios.post('http://localhost:8081/login', requestBody)
-        //         .then(function (res) {
-        //             if (res.status === 200) {
-        //                 const data = res.data;
-        //                 localStorage.setItem('token', data.accessToken);
-        //                 localStorage.setItem('refreshToken', data.refreshToken);
-        //                 navigate('/user/mainpage/dashboard');
-        //             } else {
-        //                 alert('비정상 응답')
-        //             }
-        //         })
         try {
-            const response = await axios.post('http://localhost:8081/api/citrix/login', {
+            const response = await axiosInstance.post('/api/storefront/login', {
                 username: userId,
                 password: password,
                 saveCredentials: false
@@ -202,13 +174,21 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
 
                 // 토큰 저장
                 const { accessToken, refreshToken } = response.data;
-                localStorage.setItem('accessToken', accessToken);
-                localStorage.setItem('refreshToken', refreshToken);
 
-                // 모든 axios 요청에 토큰 자동 포함
-                axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+                await Promise.all([
+                    localStorage.setItem('accessToken', accessToken),
+                    localStorage.setItem('refreshToken', refreshToken)
+                ])
 
+                // axios 기본 헤더 설정
+                axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+
+                // 약간의 지연 후 페이지 이동
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // 페이지 이동
                 navigate('/user/mainpage/dashboard');
+
             } else {
                 setErrorMessage('로그인에 실패했습니다.');
             }

@@ -5,8 +5,6 @@ import { lightTheme, darkTheme } from "./styles/Color/theme.tsx";
 import { LoginPage } from './pages/LoginPage/LoginPage.tsx';
 import UserApp from '../../front_user_page/src/UserApp';
 
-
-
 const App: React.FC = () => {
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
 

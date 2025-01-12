@@ -4,9 +4,11 @@ import Header from '../../components/Header/Header';
 import {ThemeToggleButtonProps} from "../../components/ThemeToggleButton/ThemeToggleButton.tsx";
 import styled from "styled-components";
 import SideMenu from "../../components/SideMenu/SideMenu.tsx";
-import {ContentArea2} from "./MainPage/ContentArea.tsx";
+import {ContentArea} from "./MainPage/ContentArea.tsx";
 import React from "react";
 import NotificationPanel from "../../components/NotificationPanel/NotificationPanel.tsx";
+import {useStoreFrontResources} from "../../API/DesktopApi.tsx";
+
 
 
 const DashboardContainer = styled.div`
@@ -27,6 +29,7 @@ const ContentContainer = styled.div`
 
 
 export const Dashboard: React.FC<ThemeToggleButtonProps> = ({ toggleTheme,isDarkMode }) => {
+    const {  loading, error } = useStoreFrontResources();
     return (
         <>
             <GlobalStyle />
@@ -34,7 +37,11 @@ export const Dashboard: React.FC<ThemeToggleButtonProps> = ({ toggleTheme,isDark
                 <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme}/>
                 <ContentContainer>
                     <SideMenu/>
-                    <ContentArea2/>
+                    <ContentArea>
+                        {loading && <div>Loading...</div>}
+                        {error && <div>Error loading resources</div>}
+
+                    </ContentArea>
                     <NotificationPanel/>
                 </ContentContainer>
             </DashboardContainer>

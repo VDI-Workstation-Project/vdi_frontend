@@ -10,7 +10,7 @@ const sampleCardsInfo: DesktopInfoProps[]= [
     { CPU: "Intel i5", MEMORY: "8GB", DISK: "500GB", POWER: "On", RESISTERED: "Yes", USABLE: "No"}
 ];
 
-const Mypage: React.FC = () => {
+const MypageContainer: React.FC = () => {
 
     return (
         <ContentsAreaContainer style={{justifyContent: "center"}}>
@@ -24,4 +24,4 @@ const Mypage: React.FC = () => {
 
     );
 };
-export default Mypage;
+export default MypageContainer;

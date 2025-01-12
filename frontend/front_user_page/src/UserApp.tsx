@@ -3,11 +3,14 @@ import { ThemeProvider } from 'styled-components';
 import { Routes, Route} from 'react-router-dom';
 import { lightTheme, darkTheme } from "./styles/Color/theme.tsx";
 import {Dashboard} from "./pages/Dashboard/Dashboard.tsx";
+import {useAuth} from "./components/auth/useAuth.tsx";
 
 
 
 
 const UserApp: React.FC = () => {
+    useAuth();
+
     const [isDarkMode, setIsDarkMode] = useState(false);
 
     useEffect(() => {

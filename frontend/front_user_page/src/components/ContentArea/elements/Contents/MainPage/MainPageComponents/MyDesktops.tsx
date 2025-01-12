@@ -3,6 +3,7 @@ import Win10Logo from "../../../../../../assets/imgsrc/window10Lightmode.png"
 import { FaAngleRight, FaPlusCircle  } from "react-icons/fa";
 import React from "react";
 import axios from "axios";
+import { StoreFrontResource } from '../../../../../../API/DesktopApi.tsx';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const MyDesktopsContainer = styled.div`
     display: flex;
@@ -298,22 +299,31 @@ const Indicator = styled.div<{ active: boolean }>`
 `;
 export {MyDesktopsContainer,DesktopCardContainer, IndicatorContainer, Indicator};
 
-const DeskTopCard : React.FC = () => {
+interface MyDesktopsProps {
+    resources: StoreFrontResource[]
+}
+
+
+const MyDesktops: React.FC<MyDesktopsProps> = ({ resources }) => {
     return (
-            <DesktopContainer>
-                <DesktopOsImageContainer>      
-                    <DesktopOsImageWrapper/>
-                    <Desktopname>
-                        Cloud-Workstation-01
-                    </Desktopname>
-                </DesktopOsImageContainer>
-                <DesktopRunContainer>
-                    <DesktopRunButton>
-                        <FaAngleRight size={46} />
-                    </DesktopRunButton>
-                    <Connect>Connect</Connect>
-                </DesktopRunContainer>
-            </DesktopContainer>
+        <MyDesktopsContainer>
+            {resources.map((resource) => (
+                <DesktopCardContainer key={resource.id}>
+                    <DesktopContainer>
+                        <DesktopOsImageContainer>
+                            <DesktopOsImageWrapper />
+                            <Desktopname>{resource.desktophostname}</Desktopname>
+                        </DesktopOsImageContainer>
+                        <DesktopRunContainer>
+                            <DesktopRunButton>
+                                <FaAngleRight size={46} />
+                            </DesktopRunButton>
+                            <Connect>Connect</Connect>
+                        </DesktopRunContainer>
+                    </DesktopContainer>
+                </DesktopCardContainer>
+            ))}
+        </MyDesktopsContainer>
     );
 };
 interface DesktopInfoProps {
@@ -440,5 +450,6 @@ const CreateVm : React.FC = () =>{
         </DesktopDetail>
     );
 };
-export {DeskTopCard, DesktopInfocard, DesktopInfo, CreateVm, CreateVMButton};
+export {DesktopInfocard, DesktopInfo, CreateVm, CreateVMButton};
 export type {DesktopInfoProps};
+export default MyDesktops;
