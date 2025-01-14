@@ -1,9 +1,9 @@
 import styled from "styled-components";
 import Win10Logo from "../../../../../../assets/imgsrc/window10Lightmode.png"
-import { FaAngleRight, FaPlusCircle  } from "react-icons/fa";
+import {FaAngleRight, FaPlusCircle, FaRedoAlt} from "react-icons/fa";
 import React from "react";
 import axios from "axios";
-import { StoreFrontResource } from '../../../../../../API/DesktopApi.tsx';
+import {StoreFrontResource, useStoreFrontLaunch} from '../../../../../../API/DesktopApi.tsx';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const MyDesktopsContainer = styled.div`
     display: flex;
@@ -286,6 +286,20 @@ const DetailInfoContainer4 = styled.div<DesktopInfoProps>`
         font-size: 10px;
     }
 `
+const ErrorMessage = styled.div`
+    color: red;
+    font-size: 12px;
+    margin-top: 8px;
+    text-align: center;
+`;
+
+const StatusMessage = styled.div`
+    color: #666;
+    font-size: 12px;
+    margin-top: 8px;
+    text-align: center;
+`;
+
 const IndicatorContainer = styled.div`
     display: flex;
     justify-content: center;
@@ -305,6 +319,17 @@ interface MyDesktopsProps {
 
 
 const MyDesktops: React.FC<MyDesktopsProps> = ({ resources }) => {
+
+    const { launchResource, launchStatus, loading, error } = useStoreFrontLaunch();
+
+    const handleConnect = async (resourceId: string) => {
+        try {
+            await launchResource(resourceId);
+        } catch (err) {
+            console.error('Failed to connect to desktop:', err);
+        }
+    };
+
     return (
         <MyDesktopsContainer>
             {resources.map((resource) => (
@@ -315,10 +340,45 @@ const MyDesktops: React.FC<MyDesktopsProps> = ({ resources }) => {
                             <Desktopname>{resource.desktophostname}</Desktopname>
                         </DesktopOsImageContainer>
                         <DesktopRunContainer>
-                            <DesktopRunButton>
-                                <FaAngleRight size={46} />
+                            <DesktopRunButton onClick={() => handleConnect(resource.id)}
+                            style={{cursor: loading ? 'wait' : 'pointer'}}>
+                                <FaAngleRight size={46}
+                                              style={{ opacity: loading ? 0.5 : 1 }}/>
                             </DesktopRunButton>
-                            <Connect>Connect</Connect>
+                            <Connect>
+                                {loading && resource.id === launchStatus?.resourceId
+                                    ? 'Connecting...'
+                                    : 'Connect'}
+                            </Connect>
+                            {error && resource.id === launchStatus?.resourceId && (
+                                <ErrorMessage>{error}</ErrorMessage>
+                            )}
+                            {launchStatus?.status === 'retry' &&
+                                resource.id === launchStatus.resourceId && (
+                                    <StatusMessage>
+                                        Preparing desktop...
+                                    </StatusMessage>
+                                )}
+                            <DesktopRunButton onClick={() => handleConnect(resource.id)}
+                                              style={{ padding: 8,cursor: loading ? 'wait' : 'pointer',
+                                              marginTop: 14}}>
+                                <FaRedoAlt  size={22}
+                                              style={{ opacity: loading ? 0.5 : 1 }}/>
+                            </DesktopRunButton>
+                            <Connect>
+                                {loading && resource.id === launchStatus?.resourceId
+                                    ? 'restarting...'
+                                    : 'restart'}
+                            </Connect>
+                            {error && resource.id === launchStatus?.resourceId && (
+                                <ErrorMessage>{error}</ErrorMessage>
+                            )}
+                            {launchStatus?.status === 'retry' &&
+                                resource.id === launchStatus.resourceId && (
+                                    <StatusMessage>
+                                        Preparing desktop...
+                                    </StatusMessage>
+                                )}
                         </DesktopRunContainer>
                     </DesktopContainer>
                 </DesktopCardContainer>
@@ -326,6 +386,7 @@ const MyDesktops: React.FC<MyDesktopsProps> = ({ resources }) => {
         </MyDesktopsContainer>
     );
 };
+
 interface DesktopInfoProps {
     main?: string;
     sub?: string;
