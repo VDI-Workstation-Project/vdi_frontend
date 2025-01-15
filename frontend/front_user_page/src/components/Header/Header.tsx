@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Logo } from "../../assets/logo/logo.tsx";
 import { FaAlignJustify  } from 'react-icons/fa';
 import ThemeToggleButton, {ThemeToggleButtonProps} from "../ThemeToggleButton/ThemeToggleButton.tsx";
+import {useLogout} from "../../API/Logout.tsx";
 
 
 const HeaderContainer = styled.header`
@@ -44,20 +45,48 @@ const HeaderSubContainer = styled.header`
     gap: 10px;
     z-index: 2
 `;
+const LogoutButton = styled.button`
+    
+    padding: 10px 20px;
+    height: 40px;
+    flex-direction: row;
+    gap: 6px;
+    cursor: pointer;
+    color: ${({ theme }) => theme.colors.colors};
+    background-color: ${({ theme }) => theme.colors.background};
+    user-select: none;
+    border: 0px solid ${({ theme }) => theme.colors.borderColor};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+`;
+
 
 
 const Header: React.FC<ThemeToggleButtonProps> = ({ toggleTheme,isDarkMode })  => {
 
+    const { logout } = useLogout();
+
+    const handleLogout = async () => {
+        // 확인 다이얼로그 표시
+        const isConfirmed = window.confirm('로그아웃 하시겠습니까?');
+
+        // 사용자가 확인을 클릭한 경우에만 로그아웃 실행
+        if (isConfirmed) {
+            await logout();
+        }
+    }
+
     return (
         <HeaderContainer>
-            <Logo text = "WORKSPACE"/>
+            <Logo text="WORKSPACE" />
             <HeaderSubContainer>
+                <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
                 <ThemeToggleButton toggleTheme={toggleTheme} isDarkMode={isDarkMode} />
                 <HeaderMenuIconContainer>
                     <FaAlignJustify size={34} />
                 </HeaderMenuIconContainer>
             </HeaderSubContainer>
-
         </HeaderContainer>
     );
 };

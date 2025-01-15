@@ -3,7 +3,7 @@ import Win10Logo from "../../../../../../assets/imgsrc/window10Lightmode.png"
 import {FaAngleRight, FaPlusCircle, FaRedoAlt} from "react-icons/fa";
 import React from "react";
 import axios from "axios";
-import {StoreFrontResource, useStoreFrontLaunch} from '../../../../../../API/DesktopApi.tsx';
+import {StoreFrontResource, useStoreFrontLaunch, useStoreFrontPower} from '../../../../../../API/DesktopApi.tsx';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const MyDesktopsContainer = styled.div`
     display: flex;
@@ -293,12 +293,12 @@ const ErrorMessage = styled.div`
     text-align: center;
 `;
 
-const StatusMessage = styled.div`
-    color: #666;
-    font-size: 12px;
-    margin-top: 8px;
-    text-align: center;
-`;
+// const StatusMessage = styled.div`
+//     color: #666;
+//     font-size: 12px;
+//     margin-top: 8px;
+//     text-align: center;
+// `;
 
 const IndicatorContainer = styled.div`
     display: flex;
@@ -320,7 +320,8 @@ interface MyDesktopsProps {
 
 const MyDesktops: React.FC<MyDesktopsProps> = ({ resources }) => {
 
-    const { launchResource, launchStatus, loading, error } = useStoreFrontLaunch();
+    const { launchResource, launchStatus, loading: launchLoading } = useStoreFrontLaunch();
+    const { restartMachine, powerState, loading: powerLoading, error: powerError } = useStoreFrontPower(launchResource);
 
     const handleConnect = async (resourceId: string) => {
         try {
@@ -328,6 +329,44 @@ const MyDesktops: React.FC<MyDesktopsProps> = ({ resources }) => {
         } catch (err) {
             console.error('Failed to connect to desktop:', err);
         }
+    };
+
+    const handleRestart = async (resourceId: string) => {
+        try {
+            await restartMachine(resourceId);
+        } catch (err) {
+            console.error('Failed to restart desktop:', err);
+        }
+    };
+
+    const getPowerStateMessage = () => {
+        if (powerState?.machineId) {
+            switch (powerState.status) {
+                case 'On':
+                    return 'Running';
+                case 'Off':
+                    return 'Launching...';  // 수정: Off 상태면 곧 재시작될 것이므로
+                case 'TurningOff':
+                    return 'Shutting Down...';
+                case 'Unknown':
+                    return 'Status Unknown';
+            }
+        }
+        return 'Connect';
+    };
+
+    const getStatusMessage = (resourceId: string) => {
+        if (launchStatus?.resourceId === resourceId) {
+            switch (launchStatus.status) {
+                case 'retry':
+                    return 'Preparing...';
+                case 'failure':
+                    return 'Failed to launch';
+                case 'success':
+                    return 'Launching...';
+            }
+        }
+        return getPowerStateMessage();
     };
 
     return (
@@ -340,45 +379,38 @@ const MyDesktops: React.FC<MyDesktopsProps> = ({ resources }) => {
                             <Desktopname>{resource.desktophostname}</Desktopname>
                         </DesktopOsImageContainer>
                         <DesktopRunContainer>
-                            <DesktopRunButton onClick={() => handleConnect(resource.id)}
-                            style={{cursor: loading ? 'wait' : 'pointer'}}>
+                            {/* Connect 버튼 */}
+                            <DesktopRunButton
+                                onClick={() => handleConnect(resource.id)}
+                                style={{cursor: (launchLoading || powerLoading) ? 'wait' : 'pointer'}}>
                                 <FaAngleRight size={46}
-                                              style={{ opacity: loading ? 0.5 : 1 }}/>
+                                              style={{ opacity: (launchLoading || powerLoading) ? 0.5 : 1 }}/>
                             </DesktopRunButton>
                             <Connect>
-                                {loading && resource.id === launchStatus?.resourceId
-                                    ? 'Connecting...'
-                                    : 'Connect'}
+                                {getStatusMessage(resource.id)}
                             </Connect>
-                            {error && resource.id === launchStatus?.resourceId && (
-                                <ErrorMessage>{error}</ErrorMessage>
-                            )}
-                            {launchStatus?.status === 'retry' &&
-                                resource.id === launchStatus.resourceId && (
-                                    <StatusMessage>
-                                        Preparing desktop...
-                                    </StatusMessage>
-                                )}
-                            <DesktopRunButton onClick={() => handleConnect(resource.id)}
-                                              style={{ padding: 8,cursor: loading ? 'wait' : 'pointer',
-                                              marginTop: 14}}>
-                                <FaRedoAlt  size={22}
-                                              style={{ opacity: loading ? 0.5 : 1 }}/>
+
+                            {/* Restart 버튼 */}
+                            <DesktopRunButton
+                                onClick={() => handleRestart(resource.id)}
+                                style={{
+                                    padding: 8,
+                                    cursor: (launchLoading || powerLoading) ? 'wait' : 'pointer',
+                                    marginTop: 14
+                                }}>
+                                <FaRedoAlt size={22}
+                                           style={{ opacity: (launchLoading || powerLoading) ? 0.5 : 1 }}/>
                             </DesktopRunButton>
                             <Connect>
-                                {loading && resource.id === launchStatus?.resourceId
-                                    ? 'restarting...'
-                                    : 'restart'}
+                                {powerState?.machineId && powerState.status === 'TurningOff'
+                                    ? 'Restarting...'
+                                    : 'Restart'}
                             </Connect>
-                            {error && resource.id === launchStatus?.resourceId && (
-                                <ErrorMessage>{error}</ErrorMessage>
+
+                            {/* 에러 메시지 */}
+                            {powerError && (
+                                <ErrorMessage>{powerError}</ErrorMessage>
                             )}
-                            {launchStatus?.status === 'retry' &&
-                                resource.id === launchStatus.resourceId && (
-                                    <StatusMessage>
-                                        Preparing desktop...
-                                    </StatusMessage>
-                                )}
                         </DesktopRunContainer>
                     </DesktopContainer>
                 </DesktopCardContainer>
