@@ -137,11 +137,20 @@ const SignUpInput: React.FC<SignUpInputProps> = ({ switchView }) => {
                 lastName,
                 phoneNumber,
             });
-            console.log('회원가입 요청 성공:', response.data);
-            navigate('/');  // 가입 후 로그인 페이지로 리다이렉트
+
+            if (response.data.success) {
+                alert(response.data.message);
+                switchView();
+            } else {
+                setErrorMessage(response.data.message);
+            }
         } catch (error) {
             console.error('회원가입 요청 실패:', error);
-            setErrorMessage('회원가입 요청에 실패했습니다.');
+            if (axios.isAxiosError(error) && error.response) {
+                setErrorMessage(error.response.data.message);
+            } else {
+                setErrorMessage('회원가입 요청에 실패했습니다.');
+            }
         }
     };
 
