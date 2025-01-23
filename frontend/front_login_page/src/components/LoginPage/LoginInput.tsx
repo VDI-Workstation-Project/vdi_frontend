@@ -4,8 +4,9 @@ import {SignInButton} from "../../assets/button/button.tsx";
 import { useState} from "react";
 import { useNavigate} from 'react-router-dom';
 import axiosInstance from "../auth/axiosInstance.tsx";
+import PasswordChangeForm from "./PasswordChangeForm.tsx";
 
-const Label = styled.label`
+export const Label = styled.label`
     color: #ffffff;
     font-family: "Noto Sans KR";
     font-size: 14px;
@@ -53,7 +54,7 @@ const Container = styled.div`
     }
 `
 
-const InputContainer =  styled.div`
+export const InputContainer =  styled.div`
     align-items: center;
     background-color: #ffffff;
     border: 0.7px solid;
@@ -80,12 +81,12 @@ const InputContainer =  styled.div`
         border-radius: 10px; /* 작은 화면에서는 둥근 모서리 감소 */
     }
 `
-const StyledInput = styled.input`
+export const StyledInput = styled.input`
     border: none; /* input의 기본 border 제거 */
     outline: none; /* input의 기본 outline 제거 */
     flex: 1;
 `
-const ErrorMessage = styled.p`
+export const ErrorMessage = styled.p`
     color: red;
     font-size: 12px; /* 폰트 크기를 줄이려면 이 값을 조정하세요 */
 `;
@@ -129,6 +130,11 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
     const [userId, setUserId] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
+    const [showPasswordChange, setShowPasswordChange] = useState(false);
+    const [sessionInfo, setSessionInfo] = useState<{
+        sessionId: string;
+        csrfToken: string;
+    } | null>(null);
     const navigate = useNavigate();
 
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,7 +142,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
         console.log('Email:', e.target.value);
     };
 
-    const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePasswordInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPassword(e.target.value);
         console.log('Password:', e.target.value);
     };
@@ -170,6 +176,16 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
 
             console.log('서버 응답:', response.data);  // 디버깅용
 
+            if (response.data.result === 'update-credentials') {
+                alert('최초 로그인 시 비밀번호 변경이 필요한 계정이거나, 비밀번호가 만료되었습니다.\n비밀번호 변경 페이지로 이동합니다.');
+                // setSessionInfo({
+                //     sessionId: response.data.sessionId,
+                //     csrfToken: response.data.csrfToken,
+                // })
+                setShowPasswordChange(true);
+                return;
+            }
+
             if (response.data.success) {
 
                 // 토큰 저장
@@ -178,7 +194,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
                 await Promise.all([
                     localStorage.setItem('accessToken', accessToken),
                     localStorage.setItem('refreshToken', refreshToken)
-                ])
+                ]);
 
                 // axios 기본 헤더 설정
                 axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
@@ -198,39 +214,57 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
         }
 
     };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
     };
-    // const handleLogin = () => {
-    //     // 로그인 로직 추가
-    //     console.log('로그인 요청', { email, password });
-    //     // 예: fetch API로 로그인 요청 보내기
-    //     fetch('https://example.com/api/login', {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify({ email, password })
-    //     })
-    //         .then(response => response.json())
-    //         .then(data => {
-    //             console.log('로그인 성공:', data);
-    //             if (data.success) {
-    //                 navigate(
-    //                     'dashboard',)
-    //             } else {
-    //                 console.error('Invalid login credentials');
-    //             }
-    //         })
-    //
-    //         .catch(error => {
-    //             console.error('로그인 실패:', error);
-    //             // 로그인 실패 후 로직 추가
-    //         });
-    // };
+
+    const handlePasswordChangeSubmit = async (oldPassword: string, newPassword: string, confirmPassword: string) => {
+
+        if (!sessionInfo) {
+            setErrorMessage('세션이 만료되었습니다. 다시 로그인해주세요.');
+            return;
+        }
+
+        try {
+            const response = await axiosInstance.post('/api/storefront/change-password', {
+                username: userId,
+                oldPassword,
+                newPassword,
+                confirmPassword,
+                // sessionId: sessionInfo.sessionId,
+                // csrfToken: sessionInfo.csrfToken,
+            });
+
+            if (response.data.success) {
+                setShowPasswordChange(false);
+                // setSessionInfo(null);
+                alert('비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 다시 로그인해주세요.');
+                setUserId('');
+                setPassword('');
+                setErrorMessage('');
+                navigate('/');
+            } else {
+                setErrorMessage('비밀번호 변경에 실패했습니다.');
+            }
+
+        } catch (error) {
+            console.error('Password change failed:', error);
+            setErrorMessage('비밀번호 변경 중 오류가 발생했습니다.');
+        }
+    }
 
 
     return (
         <Container>
+            {showPasswordChange ? (
+                <PasswordChangeForm
+                    username={userId}
+                    onSubmit={handlePasswordChangeSubmit}
+                    onCancel={() => setShowPasswordChange(false)}
+                    />
+            ) : (
             <FormContainer onSubmit={handleSubmit}>
                 <MainLabel>Login</MainLabel>
                 <Label>Email</Label>
@@ -247,7 +281,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
                     <StyledInput
                         type="password"
                         value={password}
-                        onChange={handlePasswordChange}
+                        onChange={handlePasswordInputChange}
                         placeholder="Password"
                     />
                 </InputContainer>
@@ -257,6 +291,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
                 <SignupButton onClick={switchView}>Don't have an account yet?</SignupButton>
 
             </FormContainer>
+            )}
         </Container>
     );
 };
