@@ -132,11 +132,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [showPasswordChange, setShowPasswordChange] = useState(false);
-    const [sessionInfo, setSessionInfo] = useState<{
-        sessionId: string;
-        csrfToken: string;
-    } | null>(null);
-    const [storefrontForm, setStorefrontForm] = useState<string | null>(null);
+    const [sessionId, setSessionId] = useState('')
     const navigate = useNavigate();
 
     const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,11 +176,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
 
             if (response.data.result === 'update-credentials') {
                 alert('최초 로그인 시 비밀번호 변경이 필요한 계정이거나, 비밀번호가 만료되었습니다.\n비밀번호 변경 페이지로 이동합니다.');
-                setSessionInfo({
-                    sessionId: response.data.sessionId,
-                    csrfToken: response.data.csrfToken,
-                })
-                setStorefrontForm(response.data.xmlForm);
+                setSessionId(response.data.sessionId);
                 setShowPasswordChange(true);
                 return;
             }
@@ -225,7 +217,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
 
     const handlePasswordChangeSubmit = async (oldPassword: string, newPassword: string, confirmPassword: string) => {
 
-        if (!sessionInfo) {
+        if (!sessionId) {
             setErrorMessage('세션이 만료되었습니다. 다시 로그인해주세요.');
             return;
         }
@@ -236,8 +228,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
                 oldPassword,
                 newPassword,
                 confirmPassword,
-                // sessionId: sessionInfo.sessionId,
-                // csrfToken: sessionInfo.csrfToken,
+                sessionId: sessionId,
             });
 
             if (response.data.success) {
@@ -261,22 +252,13 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
 
     return (
         <Container>
-            {showPasswordChange && storefrontForm ? (
-                <StoreFrontPasswordChangeForm
-                    sessionInfo={sessionInfo}
-                    xmlForm={storefrontForm}
-                    onSuccess={() => {
-                        setShowPasswordChange(false);
-                        setSessionInfo(null)
-                        setStorefrontForm(null);
-                        alert('비밀번호가 성공적으로 변경되었습니다. 새 비밀번호로 다시 로그인해주세요.');
-                        setUserId('');
-                        setPassword('');
-                    }}
+            {showPasswordChange ? (
+                <PasswordChangeForm
+                    username={userId}
+                    onSubmit={handlePasswordChangeSubmit}
                     onCancel={() => {
                         setShowPasswordChange(false);
-                        setSessionInfo(null)
-                        setStorefrontForm(null);
+                        setSessionId('')
                     }}
                     />
             ) : (
