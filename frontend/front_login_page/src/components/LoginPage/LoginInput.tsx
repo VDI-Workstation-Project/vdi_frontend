@@ -5,7 +5,6 @@ import { useState} from "react";
 import { useNavigate} from 'react-router-dom';
 import axiosInstance from "../auth/axiosInstance.tsx";
 import PasswordChangeForm from "./PasswordChangeForm.tsx";
-import StoreFrontPasswordChangeForm from "./StoreFrontPasswordChangeForm.tsx";
 
 export const Label = styled.label`
     color: #ffffff;
@@ -174,6 +173,11 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
 
             console.log('서버 응답:', response.data);  // 디버깅용
 
+            if (response.data.result === 'Incorrect user name or password') {
+                setErrorMessage(response.data.message);
+                return;
+            }
+
             if (response.data.result === 'update-credentials') {
                 alert('최초 로그인 시 비밀번호 변경이 필요한 계정이거나, 비밀번호가 만료되었습니다.\n비밀번호 변경 페이지로 이동합니다.');
                 setSessionId(response.data.sessionId);
@@ -203,16 +207,18 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
             } else {
                 setErrorMessage('로그인에 실패했습니다.');
             }
-        } catch (error) {
-            console.error('Login failed:', error);
-            setErrorMessage('로그인 중 오류가 발생했습니다.');
+        } catch (error: any) {
+            if (error.response?.data?.message) {
+                setErrorMessage(error.response.data.message);
+            } else {
+                setErrorMessage('로그인 중 오류가 발생했습니다.');
+            }
         }
 
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-
     };
 
     const handlePasswordChangeSubmit = async (oldPassword: string, newPassword: string, confirmPassword: string) => {

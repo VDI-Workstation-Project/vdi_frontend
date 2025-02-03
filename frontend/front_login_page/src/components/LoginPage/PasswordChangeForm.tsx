@@ -6,6 +6,20 @@ const FormContainer = styled.form`
     display: flex;
     flex-direction: column;
     gap: 15px;
+    max-width: 100%; // 최대 너비 제한
+`;
+
+// 입력 필드와 유효성 메시지를 그룹화하는 컨테이너
+const InputGroup = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+`;
+
+// 유효성 메시지를 위한 고정 높이 컨테이너
+const ValidationContainer = styled.div`
+    min-height: 20px; // 메시지를 위한 고정 공간
+    margin-top: 4px;
 `;
 
 const MainLabel = styled.label`
@@ -55,6 +69,13 @@ const CancelButton = styled(Button)`
     }
 `;
 
+const ValidationMessage = styled.p<{ isValid: boolean }>`
+    color: ${props => props.isValid ? '#4CAF50' : '#f44336'};
+    font-size: 12px;
+    margin: 0; // 마진 제거
+    transition: all 0.3s ease;
+`;
+
 interface PasswordChangeFormProps {
     username: string;
     onSubmit: (oldPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
@@ -66,6 +87,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ username, onSub
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -82,41 +104,82 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ username, onSub
         }
     };
 
+    const handleConfirmPassword = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setConfirmPassword(value);
+        setIsTyping(true);
+
+        if (value === '') {
+            setError('');
+        } else if (value === newPassword) {
+            setError('비밀번호가 일치합니다.');
+        } else {
+            setError('비밀번호가 일치하지 않습니다.');
+        }
+    }
+
     return (
         <FormContainer onSubmit={handleSubmit}>
             <MainLabel>비밀번호 변경</MainLabel>
-            <Label>사용자 이름</Label>
-            <InputContainer>
-                <StyledInput value={username} disabled />
-            </InputContainer>
-            <Label>현재 비밀번호</Label>
-            <InputContainer>
-                <StyledInput
-                    type="password"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                />
-            </InputContainer>
-            <Label>새 비밀번호</Label>
-            <InputContainer>
-                <StyledInput
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                />
-            </InputContainer>
-            <Label>새 비밀번호 확인</Label>
-            <InputContainer>
-                <StyledInput
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-            </InputContainer>
-            {error && <ErrorMessage>{error}</ErrorMessage>}
+
+            <InputGroup>
+                <Label>사용자 이름</Label>
+                <InputContainer>
+                    <StyledInput value={username} disabled />
+                </InputContainer>
+            </InputGroup>
+
+            <InputGroup>
+                <Label>현재 비밀번호</Label>
+                <InputContainer>
+                    <StyledInput
+                        type="password"
+                        value={oldPassword}
+                        onChange={(e) => setOldPassword(e.target.value)}
+                    />
+                </InputContainer>
+            </InputGroup>
+
+            <InputGroup>
+                <Label>새 비밀번호</Label>
+                <InputContainer>
+                    <StyledInput
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                </InputContainer>
+            </InputGroup>
+
+            <InputGroup>
+                <Label>새 비밀번호 확인</Label>
+                <InputContainer>
+                    <StyledInput
+                        type="password"
+                        value={confirmPassword}
+                        onChange={handleConfirmPassword}
+                        onBlur={() => setIsTyping(true)}
+                    />
+                </InputContainer>
+                <ValidationContainer>
+                    {isTyping && error && (
+                        <ValidationMessage isValid={error === '비밀번호가 일치합니다.'}>
+                            {error}
+                        </ValidationMessage>
+                    )}
+                </ValidationContainer>
+            </InputGroup>
+
             <ButtonContainer>
-                <SubmitButton type="submit">확인</SubmitButton>
-                <CancelButton type="button" onClick={onCancel}>취소</CancelButton>
+                <SubmitButton
+                    type="submit"
+                    disabled={error !== '비밀번호가 일치합니다.'}
+                >
+                    확인
+                </SubmitButton>
+                <CancelButton type="button" onClick={onCancel}>
+                    취소
+                </CancelButton>
             </ButtonContainer>
         </FormContainer>
     );
