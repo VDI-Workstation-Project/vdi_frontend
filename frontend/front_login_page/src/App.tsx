@@ -3,7 +3,7 @@ import { ThemeProvider } from 'styled-components';
 import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import { lightTheme, darkTheme } from "./styles/Color/theme.tsx";
 import { LoginPage } from './pages/LoginPage/LoginPage.tsx';
-import UserApp from '../../front_user_page/src/UserApp';
+import UserApp from '../../front_admin_page/src/UserApp';
 
 const App: React.FC = () => {
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);

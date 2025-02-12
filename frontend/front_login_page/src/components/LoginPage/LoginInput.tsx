@@ -202,7 +202,7 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
                 await new Promise(resolve => setTimeout(resolve, 500));
 
                 // 페이지 이동
-                navigate('/user/mainpage/dashboard');
+                navigate('/user/dashboard');
 
             } else {
                 setErrorMessage('로그인에 실패했습니다.');
@@ -237,16 +237,34 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
                 sessionId: sessionId,
             });
 
-            if (response.data.success) {
-                setShowPasswordChange(false);
-                // setSessionInfo(null);
-                alert('비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 다시 로그인해주세요.');
-                setUserId('');
-                setPassword('');
-                setErrorMessage('');
-                navigate('/');
-            } else {
-                setErrorMessage('비밀번호 변경에 실패했습니다.');
+            const result = response.data;
+
+            switch (result.status) {
+                case 'SUCCESS':
+                    setShowPasswordChange(false);
+                    alert('비밀번호가 성공적으로 변경되었습니다.\n새로운 비밀번호로 다시 로그인해주세요.');
+                    setUserId('');
+                    setPassword('');
+                    setErrorMessage('');
+                    navigate('/');
+                    break;
+
+                case 'OLD_PASSWORD_MISMATCH':
+                    setErrorMessage('현재 비밀번호가 일치하지 않습니다.');
+                    break;
+
+                case 'POLICY_VIOLATION':
+                    setErrorMessage('새 비밀번호가 정책 요구사항을 충족하지 않습니다.');
+                    break;
+
+                case 'STOREFRONT_ERROR':
+                case 'SYSTEM_ERROR':
+                    setErrorMessage('시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+                    break;
+
+                default:
+                    setErrorMessage('비밀번호 변경 중 오류가 발생했습니다.');
+                    break;
             }
 
         } catch (error) {
@@ -265,7 +283,9 @@ const LoginInput: React.FC<LoginInputProps> = ({ switchView }) => {
                     onCancel={() => {
                         setShowPasswordChange(false);
                         setSessionId('')
+                        setErrorMessage('');  // 취소 시 에러 메시지 초기화
                     }}
+                    errorMessage={errorMessage}  // 추가: 에러 메시지 전달
                     />
             ) : (
             <FormContainer onSubmit={handleSubmit}>

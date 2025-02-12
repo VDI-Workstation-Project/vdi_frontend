@@ -5,7 +5,7 @@ import { Label, InputContainer, StyledInput, ErrorMessage } from './LoginInput';
 const FormContainer = styled.form`
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
     max-width: 100%; // 최대 너비 제한
 `;
 
@@ -75,14 +75,27 @@ const ValidationMessage = styled.p<{ isValid: boolean }>`
     margin: 0; // 마진 제거
     transition: all 0.3s ease;
 `;
+const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    gap: 10px; /* 두 컨테이너 간의 간격 조절 */
+    @media (max-width: 768px) {
+        gap: 8px; /* 작은 화면에서는 간격 줄이기 */
+    }
 
+    @media (max-width: 480px) {
+        gap: 8px; /* 더 작은 화면에서는 간격 더 줄이기 */
+    }
+`
 interface PasswordChangeFormProps {
     username: string;
     onSubmit: (oldPassword: string, newPassword: string, confirmPassword: string) => Promise<void>;
     onCancel: () => void;
+    errorMessage?: string;  // 추가: 부모 컴포넌트에서 에러 메시지를 받음
 }
 
-const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ username, onSubmit, onCancel }) => {
+const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ username, onSubmit, onCancel, errorMessage }) => {
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -119,8 +132,14 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ username, onSub
     }
 
     return (
+        <Container>
         <FormContainer onSubmit={handleSubmit}>
             <MainLabel>비밀번호 변경</MainLabel>
+
+            {/* 백엔드 에러 메시지 표시 */}
+            {errorMessage && (
+                <ErrorMessage>{errorMessage}</ErrorMessage>
+            )}
 
             <InputGroup>
                 <Label>사용자 이름</Label>
@@ -182,6 +201,7 @@ const PasswordChangeForm: React.FC<PasswordChangeFormProps> = ({ username, onSub
                 </CancelButton>
             </ButtonContainer>
         </FormContainer>
+        </Container>
     );
 };
 
